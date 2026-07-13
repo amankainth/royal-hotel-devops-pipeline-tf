@@ -22,9 +22,8 @@ pipeline {
         stage('Terraform Init & Plan') {
             steps {
                 dir('terraform') {
-                    echo 'Initializing Terraform...'
+                    echo 'Initializing Terraform and migrating state to S3...'
                     sh 'terraform init -force-copy'
-                    // Using -input=false explicitly
                     sh 'terraform plan -input=false'
                 }
             }
@@ -38,8 +37,6 @@ pipeline {
                 }
             }
         }
-    }
-}
     }
 
     post {

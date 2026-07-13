@@ -1,22 +1,17 @@
-# Automatically query the latest Amazon Linux 2023 AMI
-data "aws_ami" "amazon_linux_2023" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
-  }
+variable "aws_region" {
+  type        = string
+  default     = "us-east-1"
+  description = "AWS region for deploying Server 2 (dev-instance)"
 }
 
-# Provision Server 2 (dev-instance)
-resource "aws_instance" "dev_instance" {
-  ami           = data.aws_ami.amazon_linux_2023.id
-  instance_type = var.instance_type
+variable "instance_type" {
+  type        = string
+  default     = "t3.micro"
+  description = "EC2 instance size for the development server"
+}
 
-  tags = {
-    Name        = "royal-hotel-dev-instance"
-    Environment = "development"
-    Project     = "royal-hotel-devops-pipeline"
-  }
+variable "key_name" {
+  type        = string
+  default     = "control-hub-key" # <--- Changed default to reuse your Control Node key pair
+  description = "SSH key pair name associated with the instance"
 }

@@ -1,0 +1,21 @@
+# Navigate into your project folder
+cd royal-hotel-devops-pipeline
+
+# Create the folder hierarchy
+mkdir terraform, ansible -Force
+
+# Create root files
+New-Item -ItemType File -Name ".gitignore" -Force
+New-Item -ItemType File -Name "README.md" -Force
+New-Item -ItemType File -Name "Jenkinsfile" -Force
+
+# Create Terraform blueprint files
+New-Item -ItemType File -Path "terraform\main.tf" -Force
+New-Item -ItemType File -Path "terraform\variables.tf" -Force
+New-Item -ItemType File -Path "terraform\outputs.tf" -Force
+New-Item -ItemType File -Path "terraform\providers.tf" -Force
+
+# Create Ansible configuration files
+New-Item -ItemType File -Path "ansible\playbook.yml" -Force
+New-Item -ItemType File -Path "ansible\inventory.ini" -Force
+New-Item -ItemType File -Path "ansible\ansible.cfg" -Force

@@ -3,6 +3,9 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = 'us-east-1'
+        // Redirect temp files away from the small /tmp partition
+        TMPDIR            = '/var/tmp'
+        JAVA_TOOL_OPTIONS = '-Djava.io.tmpdir=/var/tmp'
     }
 
     stages {
@@ -31,6 +34,12 @@ pipeline {
                 }
             }
         }
+    }
 
+    post {
+        always {
+            // Optional: cleans up generated temporary files/workspace after execution
+            cleanWs deleteDirs: true, notFailBuild: true
+        }
     }
 }

@@ -23,7 +23,7 @@ pipeline {
             steps {
                 dir('terraform') {
                     echo 'Initializing Terraform...'
-                    sh 'terraform init'
+                    sh 'terraform init -force-copy'
                     // Using -input=false explicitly
                     sh 'terraform plan -input=false'
                 }
@@ -38,6 +38,8 @@ pipeline {
                 }
             }
         }
+    }
+}
     }
 
     post {

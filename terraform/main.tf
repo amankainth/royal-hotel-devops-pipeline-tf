@@ -9,26 +9,27 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-# 1. Fetch the default VPC explicitly
-data "aws_vpc" "default" {
-  default = true
-}
-
-# 2. Fetch subnets in the default VPC
-data "aws_subnets" "default" {
+# 1. Look up your specific VPC by Name tag
+data "aws_vpc" "control_hub" {
   filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+    name   = "tag:Name"
+    values = ["control-hub-vpc"]
   }
 }
 
-# Create Security Group for Server 2 (Webserver)
+# 2. Fetch public subnets in your control-hub-vpc
+data "aws_subnets" "control_hub_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.control_hub.id]
+  }
+}
+
+# Create Security Group inside control-hub-vpc
 resource "aws_security_group" "webserver_sg" {
   name        = "royal-hotel-webserver-sg"
   description = "Allow SSH and Java Web UI Traffic"
-  
-  # EXPLICITLY BIND VPC ID HERE:
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.aws_vpc.control_hub.id # <--- Explicitly attaches to control-hub-vpc
 
   ingress {
     from_port   = 22
@@ -57,10 +58,8 @@ resource "aws_instance" "dev_instance" {
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = var.instance_type
   key_name                    = var.key_name
-  
-  # Attach explicitly fetched VPC Security Group ID and Subnet ID
   vpc_security_group_ids      = [aws_security_group.webserver_sg.id]
-  subnet_id                   = data.aws_subnets.default.ids[0]
+  subnet_id                   = data.aws_subnets.control_hub_subnets.ids[0] # <--- Places instance in control-hub subnet
   associate_public_ip_address = true
 
   tags = {

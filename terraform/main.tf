@@ -1,4 +1,25 @@
-# Automatically query the latest Amazon Linux 2023 AMI
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+
+  # REMOTE BACKEND CONFIGURATION
+  backend "s3" {
+    bucket         = "royal-hotel-tf-state-bucket"  # Your bucket name
+    key            = "dev/terraform.tfstate"         # Path within the bucket
+    region         = "us-east-1"
+    dynamodb_table = "royal-hotel-tf-locks"         # DynamoDB table name
+    encrypt        = true                             # Enable SSE
+  }
+}
+
+# --- REST OF YOUR EXISTING MAIN.TF BELOW ---
+
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
@@ -9,7 +30,6 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-# 1. Look up your specific VPC by Name tag
 data "aws_vpc" "control_hub" {
   filter {
     name   = "tag:Name"
@@ -17,7 +37,6 @@ data "aws_vpc" "control_hub" {
   }
 }
 
-# 2. Fetch public subnets in your control-hub-vpc
 data "aws_subnets" "control_hub_subnets" {
   filter {
     name   = "vpc-id"
@@ -25,24 +44,23 @@ data "aws_subnets" "control_hub_subnets" {
   }
 }
 
-# Create Security Group inside control-hub-vpc
 resource "aws_security_group" "webserver_sg" {
   name        = "royal-hotel-webserver-sg"
   description = "Allow SSH and Java Web UI Traffic"
-  vpc_id      = data.aws_vpc.control_hub.id # <--- Explicitly attaches to control-hub-vpc
+  vpc_id      = data.aws_vpc.control_hub.id
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allows Ansible connection
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allows application web access
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -53,13 +71,12 @@ resource "aws_security_group" "webserver_sg" {
   }
 }
 
-# Provision Server 2 (dev-instance)
 resource "aws_instance" "dev_instance" {
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = var.instance_type
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.webserver_sg.id]
-  subnet_id                   = data.aws_subnets.control_hub_subnets.ids[0] # <--- Places instance in control-hub subnet
+  subnet_id                   = data.aws_subnets.control_hub_subnets.ids[0]
   associate_public_ip_address = true
 
   tags = {

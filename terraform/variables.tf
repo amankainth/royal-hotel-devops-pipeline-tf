@@ -12,6 +12,6 @@ variable "instance_type" {
 
 variable "key_name" {
   type        = string
-  default     = "dev-instance-key"
+  default     = "control-hub-key" # <--- Changed default to reuse your Control Node key pair
   description = "SSH key pair name associated with the instance"
 }
